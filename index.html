@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego de Memoria</title>
+    <style>
+        body {
+        font-family: sans-serif;
+        text-align: center;
+        background: #572e4f;
+        }
+
+        .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 100px);
+        grid-gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+        }
+
+        .card {
+        width: 100px;
+        height: 100px;
+        perspective: 1000px;
+        cursor: pointer;
+        }
+
+        .card .front, .card .back {
+        width: 100%;
+        height: 100%;
+        line-height: 80px;
+        text-align: center;
+        font-size: 2rem;
+        background: #027b7f;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        position: absolute;
+        backface-visibility: hidden;
+        transition: transform 0.6s;
+        }
+
+        .card .back {
+        transform: rotateY(180deg);
+        background: #ffa588;
+        }
+
+        .card.voltear .front {
+        transform: rotateY(180deg);
+        }
+
+        .card.voltear .back {
+        transform: rotateY(0deg);
+        }
+
+        .card > div {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        }
+
+        .ganar {
+        margin-top: 20px;
+        font-size: 1.5rem;
+        color: green;
+        font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        function Memoria() {
+            const [tarjeta, settarjeta] = React.useState([]);
+            const [voltear, setvoltear] = React.useState([]);
+            const [iguales, setiguales] = React.useState([]);
+            const [movimientos, setmovimientos] = React.useState(0);
+            const [gameOver, setGameOver] = React.useState(false);
+
+            const figuras = ['😁', '🤮', '🤯', '😎', '🤬', '😂', '👺', '🤠'];
+
+            React.useEffect(() => {
+                const mezclar = [...figuras, ...figuras]
+                .sort(() => Math.random() - 0.5)
+                .map((symbol, index) => ({ id: index, symbol }));
+                settarjeta(mezclar);
+            }, []);
+
+            const handleClick = (index) => {
+                if (voltear.length === 2 || voltear.includes(index) || iguales.includes(index)) return;
+
+                const newvoltear = [...voltear, index];
+                setvoltear(newvoltear);
+
+                if (newvoltear.length === 2) {
+                setmovimientos(m => m + 1);
+                const [i1, i2] = newvoltear;
+                if (tarjeta[i1].symbol === tarjeta[i2].symbol) {
+                    setiguales([...iguales, i1, i2]);
+                    setvoltear([]);
+                } else {
+                    setTimeout(() => setvoltear([]), 1000);
+                }
+                }
+            };
+
+            React.useEffect(() => {
+                if (iguales.length === tarjeta.length && tarjeta.length > 0) {
+                setGameOver(true);
+                }
+            }, [iguales]);
+
+            return (
+                <div>
+                <h1>Juego de Memoria</h1>
+                <p>Movimientos: {movimientos}</p>
+                <div className="grid">
+                    {tarjeta.map((card, index) => {
+                    const isvoltear = voltear.includes(index) || iguales.includes(index);
+                    return (
+                        <div key={card.id} className={`card ${isvoltear ? "voltear" : ""}`} onClick={() => handleClick(index)}>
+                        <div className="front">🤔</div>
+                        <div className="back">{card.symbol}</div>
+                        </div>
+                    );
+                    })}
+                </div>
+                {gameOver && <p className="ganar">¡Juego completado!</p>}
+                </div>
+            );
+            }
+
+            ReactDOM.createRoot(document.getElementById("root")).render(<Memoria />);
+    </script>
+</body>
+</html>
